@@ -17,11 +17,11 @@ def get_ollama_models():
         print(f"Error fetching models: {str(e)}")
         return []
 
-def get_ollama_response(messages, model='gemma3:1b'):
+def get_ollama_response(messages, model='llama3.2:3b'):
     # Create the base messages list with the system prompt
     print(model)
     messages_context = [
-        {"role": "system", "content": "YOU SYSTEM PROMPT HERE..."}]
+        {"role": "system", "content": "YOUR SYSTEM PROMPT HERE"}]
     
     # Add user messages if they exist
     if isinstance(messages, list):
