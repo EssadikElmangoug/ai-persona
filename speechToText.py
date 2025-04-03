@@ -9,8 +9,7 @@ url = "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL"
 
 headers = {
   "Accept": "audio/mpeg",
-  "Content-Type": "application/json",
-  "xi-api-key": os.environ['ELEVEN_LABS_KEY']
+  "Content-Type": "application/json"
 }
 
 
