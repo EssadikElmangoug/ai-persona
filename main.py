@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, send_file, jsonify
 from gemini import get_ollama_response, get_ollama_models
 from speechToText import conver_to_audio
-from database import save_settings, get_settings
+from database import save_settings, get_settings, get_all_projects, get_project_by_id, update_project, delete_project
 import json
 import os
 from werkzeug.utils import secure_filename
@@ -139,6 +139,139 @@ def ai(id):
         return render_template('project.html', settings=settings, avatar_path=avatar_path)
     else:
         return "AI project not found", 404
+
+@app.route("/get-all-projects", methods=["GET"])
+def fetch_all_projects():
+    """Route to get all projects from the database"""
+    try:
+        projects = get_all_projects()
+        return jsonify({"success": True, "projects": projects})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+@app.route("/get-project/<project_id>", methods=["GET"])
+def fetch_project(project_id):
+    """Route to get a single project by ID"""
+    try:
+        project = get_project_by_id(project_id)
+        if project:
+            return jsonify({"success": True, "project": project})
+        else:
+            return jsonify({"success": False, "message": "Project not found"}), 404
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+@app.route("/delete-project/<project_id>", methods=["DELETE"])
+def remove_project(project_id):
+    """Route to delete a project by ID"""
+    try:
+        result = delete_project(project_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+@app.route("/edit-project/<project_id>", methods=["GET"])
+def edit_project_page(project_id):
+    """Route to render the edit project page"""
+    project = get_project_by_id(project_id)
+    if project:
+        return render_template('edit-project.html', project=project)
+    else:
+        return "Project not found", 404
+
+@app.route("/update_project", methods=["POST"])
+def update_project_settings():
+    """Route to update an existing project"""
+    try:
+        # Get the current project ID
+        project_id = request.form.get("projectId")
+        page_title = request.form.get("pageTitle")
+        system_prompt = request.form.get("systemPrompt")
+        model_selection = request.form.get("modelSelection")
+        avatar_option = request.form.get("avatarOption")
+        
+        # Validate required fields
+        if not project_id or not page_title or not system_prompt or not model_selection:
+            return jsonify({
+                "success": False,
+                "message": "All fields are required. Please complete the form."
+            }), 400
+        
+        # Check if the project exists
+        existing_project = get_project_by_id(project_id)
+        if not existing_project:
+            return jsonify({
+                "success": False,
+                "message": f"Project '{project_id}' not found"
+            }), 404
+        
+        # Handle avatar updates based on selected option
+        avatar_path = existing_project.get('avatar_path')
+        
+        if avatar_option == 'upload' and 'avatar' in request.files:
+            avatar_file = request.files['avatar']
+            if avatar_file and avatar_file.filename:
+                # Create uploads directory if it doesn't exist
+                upload_dir = os.path.join(app.static_folder, 'uploads')
+                if not os.path.exists(upload_dir):
+                    os.makedirs(upload_dir)
+                
+                # Save the file with a secure filename
+                filename = secure_filename(avatar_file.filename)
+                file_path = os.path.join(upload_dir, filename)
+                avatar_file.save(file_path)
+                
+                # Store the relative path to be saved in database/config
+                avatar_path = f'/static/uploads/{filename}'
+        elif avatar_option == 'default':
+            # Use default avatar
+            avatar_path = '/static/uploads/default.png'
+        # For 'keep' option, we use the existing avatar_path value
+        
+        # Create a slug from the page title if it changed
+        new_title_slug = None
+        if page_title:
+            # Convert to slug format first
+            page_title_slug = page_title.replace(' ', '-').lower()
+            # Only set new title if it's different from current
+            if page_title_slug != project_id:
+                new_title_slug = page_title_slug
+        
+        # Update the project in the database
+        result = update_project(
+            page_title=project_id,
+            new_title=new_title_slug,
+            system_prompt=system_prompt,
+            model_selection=model_selection,
+            avatar_path=avatar_path
+        )
+        
+        # Check if the operation was successful
+        if result['success']:
+            # Get the new page title (might be the same as before)
+            new_page_title = result.get('new_page_title', project_id)
+            
+            return jsonify({
+                "success": True, 
+                "message": "Project updated successfully",
+                "redirect_url": f"/ai/{new_page_title}" 
+            })
+        else:
+            # Handle specific errors
+            if result.get('error') == 'duplicate_title':
+                return jsonify({
+                    "success": False, 
+                    "message": "A project with this title already exists. Please choose a different title.",
+                    "error": "duplicate_title"
+                }), 409
+            else:
+                return jsonify({
+                    "success": False, 
+                    "message": result.get('message', "Unknown error")
+                })
+            
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
