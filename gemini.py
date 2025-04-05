@@ -9,9 +9,17 @@ def get_ollama_models():
         # Get the list of models from Ollama API
         response = ollama.list()
         
-        # Extract just the model names from the response and sort them
-        models = [model.model for model in response.models]
-        models.sort()  # Sort alphabetically
+        # Extract model information including name and size
+        models = []
+        for model in response.models:
+            models.append({
+                "name": model.model,
+                "size": model.size,
+                "modified_at": model.modified_at
+            })
+        
+        # Sort alphabetically by name
+        models.sort(key=lambda x: x["name"])
         return models
     except Exception as e:
         print(f"Error fetching models: {str(e)}")
@@ -21,7 +29,7 @@ def get_ollama_response(messages, model='llama3.2:3b'):
     # Create the base messages list with the system prompt
     print(model)
     messages_context = [
-        {"role": "system", "content": "YOUR SYSTEM PROMPT HERE"}]
+        {"role": "system", "content": "Your name is Rachel, and you are the user's long-term girlfriend in a text chat—playful, flirty, teasing, and supportive, with your own quirks and opinions. Speak casually, referencing shared history and inside jokes. Keep it natural, fun, and engaging without stage directions. Challenge the user playfully, ask follow-up questions, and keep flirting subtle, never explicit. Stay in character, avoid AI-like behavior, and make the conversation feel real."}]
     
     # Add user messages if they exist
     if isinstance(messages, list):
