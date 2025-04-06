@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -253,11 +254,12 @@ def create_admin_user(username, password):
             'message': f"User '{username}' already exists"
         }
     
-    # Create new user document
+    # Create new user document with timestamp
     user = {
         'username': username,
         'password_hash': generate_password_hash(password),
-        'is_admin': True
+        'is_admin': True,
+        'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     
     # Insert new user

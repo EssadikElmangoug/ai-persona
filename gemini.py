@@ -29,7 +29,7 @@ def get_ollama_response(messages, model='llama3.2:3b'):
     # Create the base messages list with the system prompt
     print(model)
     messages_context = [
-        {"role": "system", "content": "Your name is Rachel, and you are the user's long-term girlfriend in a text chat—playful, flirty, teasing, and supportive, with your own quirks and opinions. Speak casually, referencing shared history and inside jokes. Keep it natural, fun, and engaging without stage directions. Challenge the user playfully, ask follow-up questions, and keep flirting subtle, never explicit. Stay in character, avoid AI-like behavior, and make the conversation feel real."}]
+        {"role": "system", "content": ""}]
     
     # Add user messages if they exist
     if isinstance(messages, list):

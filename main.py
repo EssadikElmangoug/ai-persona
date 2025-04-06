@@ -407,6 +407,66 @@ def update_project_settings():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
+@app.route("/manage-admins", methods=["GET"])
+@login_required
+@admin_required
+def manage_admins():
+    """Route to display the admin management page"""
+    try:
+        # Get all admin users
+        admin_users = list(users_collection.find({'is_admin': True}))
+        for user in admin_users:
+            user['_id'] = str(user['_id'])
+            # Remove password hash for security
+            if 'password_hash' in user:
+                del user['password_hash']
+        
+        return render_template('manage_admins.html', admin_users=admin_users)
+    except Exception as e:
+        flash(f"Error loading admin users: {str(e)}", 'danger')
+        return redirect(url_for('dashboard'))
+
+@app.route("/create-admin", methods=["POST"])
+@login_required
+@admin_required
+def create_admin():
+    """Route to create a new admin user"""
+    try:
+        username = request.form.get("username")
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        
+        # Validate input
+        if not username or not password or not confirm_password:
+            flash("All fields are required", "danger")
+            return redirect(url_for('manage_admins'))
+        
+        if password != confirm_password:
+            flash("Passwords do not match", "danger")
+            return redirect(url_for('manage_admins'))
+        
+        if len(password) < 8:
+            flash("Password must be at least 8 characters long", "danger")
+            return redirect(url_for('manage_admins'))
+        
+        # Check if user already exists
+        if users_collection.find_one({'username': username}):
+            flash(f"User '{username}' already exists", "danger")
+            return redirect(url_for('manage_admins'))
+        
+        # Create the admin user
+        result = create_admin_user(username, password)
+        
+        if result['success']:
+            flash(f"Admin user '{username}' created successfully", "success")
+        else:
+            flash(f"Error creating admin user: {result['message']}", "danger")
+        
+        return redirect(url_for('manage_admins'))
+    except Exception as e:
+        flash(f"Error creating admin user: {str(e)}", "danger")
+        return redirect(url_for('manage_admins'))
+
 if __name__ == "__main__":
     from dotenv import load_dotenv
     from bson import ObjectId
