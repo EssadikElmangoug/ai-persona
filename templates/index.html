@@ -318,7 +318,7 @@
                         'role': 'assistant',
                         'content': message
                     });
-                    setCookie("messages", JSON.stringify(messages), 7);
+                    // Remove cookie storage
                     appendMessage(BOT_NAME, BOT_IMG, "left", message);
                     fetchAudio(message);
                 });
@@ -365,16 +365,17 @@
             
             // Add cookie utilities and load saved messages
             function setCookie(name, value, days) {
+                // Function kept for potential future use but not used for messages
                 let expires = "";
                 if (days) {
                     let date = new Date();
                     date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
                     expires = "; expires=" + date.toUTCString();
                 }
-                console.log("Cookie saved")
                 document.cookie = name + "=" + (value || "") + expires + "; path=/";
             }
             function getCookie(name) {
+                // Function kept for potential future use but not used for messages
                 let nameEQ = name + "=";
                 let ca = document.cookie.split(";");
                 for (let i = 0; i < ca.length; i++) {
@@ -382,18 +383,6 @@
                     if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
                 }
                 return null;
-            }
-            let savedMessages = getCookie("messages");
-            if (savedMessages) {
-                messages = JSON.parse(savedMessages);
-                // Replay saved messages
-                messages.forEach(msg => {
-                    if (msg.role === 'user') {
-                        appendMessage(PERSON_NAME, PERSON_IMG, "right", msg.content);
-                    } else {
-                        appendMessage(BOT_NAME, BOT_IMG, "left", msg.content);
-                    }
-                });
             }
 
             msgerForm.addEventListener("submit", event => {
@@ -503,8 +492,7 @@
                                 'role': 'user',
                                 'content': fullTranscript
                             });
-                            // TODO uncomment
-                            setCookie("messages", JSON.stringify(messages), 7);
+                            // Remove cookie storage
                             botResponse(fullTranscript);
                             
                             allTranscripts.push(fullTranscript);

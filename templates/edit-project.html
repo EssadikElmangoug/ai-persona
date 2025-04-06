@@ -53,6 +53,9 @@
             color: white;
             padding: 30px 40px;
             border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .dashboard-header h1 {
@@ -65,6 +68,14 @@
             font-weight: 300;
             opacity: 0.9;
             margin-bottom: 0;
+        }
+        
+        .dashboard-header .header-content {
+            flex: 1;
+        }
+        
+        .dashboard-header .header-actions {
+            flex-shrink: 0;
         }
         
         .form-container {
@@ -247,13 +258,33 @@
         .back-button {
             margin-bottom: 20px;
         }
+        
+        .btn-logout {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-full);
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-logout:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
     <div class="container dashboard-container">
         <div class="dashboard-header">
-            <h1><i class="fas fa-edit me-2"></i>Edit AI Project</h1>
-            <p>Update your AI assistant's settings and personality</p>
+            <div class="header-content">
+                <h1><i class="fas fa-edit me-2"></i>Edit AI Project</h1>
+                <p>Update your AI assistant's configuration</p>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('logout') }}" class="btn btn-logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
+            </div>
         </div>
 
         <div class="form-container">

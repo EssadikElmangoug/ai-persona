@@ -272,8 +272,12 @@
                     });
                 }
             
+                // Extract the project ID from the URL path
+                const pathParts = window.location.pathname.split('/');
+                const projectId = pathParts[pathParts.length - 1];
+            
                 // Try to load project settings from the server
-                fetch('/get-settings')
+                fetch(`/get-settings?title=${projectId}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.success && data.settings) {
@@ -296,23 +300,6 @@
                                 currentModel = settings.model_selection;
                                 console.log("Using model:", currentModel);
                             }
-                            
-                            // If we have messages cached, re-render them with updated settings
-                            let savedMessages = getCookie("messages");
-                            if (savedMessages) {
-                                // Clear current messages display
-                                msgerChat.innerHTML = '';
-                                
-                                // Re-render with new settings
-                                messages = JSON.parse(savedMessages);
-                                messages.forEach(msg => {
-                                    if (msg.role === 'user') {
-                                        appendMessage(PERSON_NAME, PERSON_IMG, "right", msg.content);
-                                    } else {
-                                        appendMessage(BOT_NAME, BOT_IMG, "left", msg.content);
-                                    }
-                                });
-                            }
                         }
                     })
                     .catch(error => {
@@ -326,6 +313,11 @@
                 // Removed duplicate pushing of user message here.
                 formData.append('messages', JSON.stringify(messages));
                 formData.append('model', currentModel); // Send the default model
+                
+                // Extract the project ID from the URL path
+                const pathParts = window.location.pathname.split('/');
+                const projectId = pathParts[pathParts.length - 1];
+                formData.append('title', projectId); // Send the project ID
             
                 fetch('/tts', {
                     method: 'POST',
@@ -339,7 +331,6 @@
                         'role': 'assistant',
                         'content': message
                     });
-                    setCookie("messages", JSON.stringify(messages), 7);
                     appendMessage(BOT_NAME, BOT_IMG, "left", message);
                     fetchAudio(message);
                 });
@@ -379,18 +370,19 @@
                 "I feel sleepy! :("
             ];
             
-            // Add cookie utilities and load saved messages
+            // Add cookie utilities but don't use them for messages
             function setCookie(name, value, days) {
+                // Function kept for potential future use but not used for messages
                 let expires = "";
                 if (days) {
                     let date = new Date();
                     date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
                     expires = "; expires=" + date.toUTCString();
                 }
-                console.log("Cookie saved")
                 document.cookie = name + "=" + (value || "") + expires + "; path=/";
             }
             function getCookie(name) {
+                // Function kept for potential future use but not used for messages
                 let nameEQ = name + "=";
                 let ca = document.cookie.split(";");
                 for (let i = 0; i < ca.length; i++) {
@@ -399,19 +391,7 @@
                 }
                 return null;
             }
-            let savedMessages = getCookie("messages");
-            if (savedMessages) {
-                messages = JSON.parse(savedMessages);
-                // Replay saved messages
-                messages.forEach(msg => {
-                    if (msg.role === 'user') {
-                        appendMessage(PERSON_NAME, PERSON_IMG, "right", msg.content);
-                    } else {
-                        appendMessage(BOT_NAME, BOT_IMG, "left", msg.content);
-                    }
-                });
-            }
-
+            
             msgerForm.addEventListener("submit", event => {
             event.preventDefault();
             
@@ -520,7 +500,6 @@
                                 'content': fullTranscript
                             });
                             // TODO uncomment
-                            setCookie("messages", JSON.stringify(messages), 7);
                             botResponse(fullTranscript);
                             
                             allTranscripts.push(fullTranscript);

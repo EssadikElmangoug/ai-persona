@@ -2,6 +2,7 @@ from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
 from bson import ObjectId
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Load environment variables
 load_dotenv()
@@ -18,6 +19,7 @@ db = client['project_db']
 
 # Define collections
 settings_collection = db['settings']
+users_collection = db['users']
 
 def save_settings(page_title=None, system_prompt=None, 
                   model_selection=None, avatar_path=None):
@@ -229,4 +231,79 @@ def delete_project(page_title):
             'success': False,
             'message': f"Project '{page_title}' not found",
             'error': 'not_found'
-        } 
+        }
+
+# User management functions
+def create_admin_user(username, password):
+    """
+    Create an admin user
+    
+    Args:
+        username (str): Admin username
+        password (str): Admin password
+        
+    Returns:
+        dict: Result with success status, message and ID of the document
+    """
+    # Check if user already exists
+    existing_user = users_collection.find_one({'username': username})
+    if existing_user:
+        return {
+            'success': False,
+            'message': f"User '{username}' already exists"
+        }
+    
+    # Create new user document
+    user = {
+        'username': username,
+        'password_hash': generate_password_hash(password),
+        'is_admin': True
+    }
+    
+    # Insert new user
+    result = users_collection.insert_one(user)
+    
+    return {
+        'success': True,
+        'message': "Admin user created successfully",
+        'user_id': str(result.inserted_id)
+    }
+
+def get_user(username):
+    """
+    Get user by username
+    
+    Args:
+        username (str): Username to look up
+        
+    Returns:
+        dict: User document or None if not found
+    """
+    user = users_collection.find_one({'username': username})
+    
+    if user:
+        # Convert ObjectId to string for JSON serialization
+        user['_id'] = str(user['_id'])
+        return user
+    
+    return None
+
+def verify_user(username, password):
+    """
+    Verify user credentials
+    
+    Args:
+        username (str): Username to verify
+        password (str): Password to verify
+        
+    Returns:
+        dict: User document if verified, None otherwise
+    """
+    user = users_collection.find_one({'username': username})
+    
+    if user and check_password_hash(user['password_hash'], password):
+        # Convert ObjectId to string for JSON serialization
+        user['_id'] = str(user['_id'])
+        return user
+    
+    return None 
