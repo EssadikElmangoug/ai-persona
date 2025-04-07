@@ -281,7 +281,6 @@
                             // Update page title if available
                             if (settings.page_title) {
                                 document.title = settings.page_title;
-                                document.getElementById('chatTitle').textContent = settings.page_title;
                             }
                             
                             // Update AI avatar if available
@@ -296,36 +295,49 @@
                                 console.log("Using model:", currentModel);
                             }
                             
-                            // Check for saved messages for this route
+                            // Check for saved messages in localStorage
                             let savedMessages = localStorage.getItem(storageKey);
                             if (savedMessages) {
-                                // Parse saved messages
-                                let parsedMessages = JSON.parse(savedMessages);
-                                
-                                // If system prompt exists, ensure we keep it
-                                if (HAS_SYSTEM_PROMPT && parsedMessages.length > 0) {
-                                    // Check if the first message is a system message
-                                    if (parsedMessages[0].role !== 'system') {
-                                        // If not, prepend our system message
-                                        parsedMessages.unshift({
+                                try {
+                                    // Parse saved messages
+                                    let parsedMessages = JSON.parse(savedMessages);
+                                    
+                                    // If system prompt exists, ensure we keep it
+                                    if (HAS_SYSTEM_PROMPT && parsedMessages.length > 0) {
+                                        // Check if the first message is a system message
+                                        if (parsedMessages[0].role !== 'system') {
+                                            // If not, prepend our system message
+                                            parsedMessages.unshift({
+                                                'role': 'system',
+                                                'content': SYSTEM_PROMPT
+                                            });
+                                        }
+                                    }
+                                    
+                                    // Set messages and render them
+                                    messages = parsedMessages;
+                                    
+                                    // Render messages
+                                    messages.forEach(msg => {
+                                        if (msg.role === 'user') {
+                                            appendMessage(PERSON_NAME, PERSON_IMG, "right", msg.content);
+                                        } else if (msg.role === 'assistant') {
+                                            appendMessage(BOT_NAME, BOT_IMG, "left", msg.content);
+                                        }
+                                        // Don't render system messages
+                                    });
+                                } catch (e) {
+                                    console.error("Error parsing saved messages:", e);
+                                    // Reset messages if parsing fails
+                                    if (HAS_SYSTEM_PROMPT) {
+                                        messages = [{
                                             'role': 'system',
                                             'content': SYSTEM_PROMPT
-                                        });
+                                        }];
+                                    } else {
+                                        messages = [];
                                     }
                                 }
-                                
-                                // Set messages and render them
-                                messages = parsedMessages;
-                                
-                                // Render messages
-                                messages.forEach(msg => {
-                                    if (msg.role === 'user') {
-                                        appendMessage(PERSON_NAME, PERSON_IMG, "right", msg.content);
-                                    } else if (msg.role === 'assistant') {
-                                        appendMessage(BOT_NAME, BOT_IMG, "left", msg.content);
-                                    }
-                                    // Don't render system messages
-                                });
                             }
                         }
                     })
@@ -382,7 +394,12 @@
                     });
                     
                     // Save messages to localStorage with route key
-                    localStorage.setItem(storageKey, JSON.stringify(messages));
+                    try {
+                        localStorage.setItem(storageKey, JSON.stringify(messages));
+                        console.log("Messages saved to localStorage:", storageKey);
+                    } catch (e) {
+                        console.error("Error saving to localStorage:", e);
+                    }
                     
                     appendMessage(BOT_NAME, BOT_IMG, "left", message);
                     fetchAudio(message);
@@ -449,7 +466,12 @@
                 });
                 
                 // Save to localStorage
-                localStorage.setItem(storageKey, JSON.stringify(messages));
+                try {
+                    localStorage.setItem(storageKey, JSON.stringify(messages));
+                    console.log("User message saved to localStorage:", storageKey);
+                } catch (e) {
+                    console.error("Error saving to localStorage:", e);
+                }
             
                 botResponse(msgText);
             });
@@ -555,7 +577,12 @@
                         'content': message
                     });
                     // Save messages to localStorage with current route as key
-                    localStorage.setItem(storageKey, JSON.stringify(messages));
+                    try {
+                        localStorage.setItem(storageKey, JSON.stringify(messages));
+                        console.log("Bot response saved to localStorage:", storageKey);
+                    } catch (e) {
+                        console.error("Error saving to localStorage:", e);
+                    }
                     appendMessage(BOT_NAME, BOT_IMG, "left", message);
                     fetchAudio(message);
                 })
