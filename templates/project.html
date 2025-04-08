@@ -25,6 +25,66 @@
                 /* background: linear-gradient(90deg, #FFE259 15.1%, #FFA751 85.42%); */
             }
 
+            /* Modal styles */
+            .modal-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .modal-container {
+                background-color: white;
+                border-radius: 10px;
+                padding: 20px;
+                width: 90%;
+                max-width: 400px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                text-align: center;
+            }
+
+            .modal-title {
+                font-size: 18px;
+                margin-bottom: 20px;
+                color: #333;
+            }
+
+            .modal-buttons {
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+            }
+
+            .modal-btn {
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+
+            .modal-btn-cancel {
+                background-color: #f1f1f1;
+                color: #333;
+                border: 1px solid #ddd;
+            }
+
+            .modal-btn-confirm {
+                background-color: #579FFB;
+                color: white;
+                border: none;
+            }
+
+            .modal-btn:hover {
+                opacity: 0.9;
+            }
+
             :root {
             --body-bg: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             --msger-bg: #fff;
@@ -155,7 +215,7 @@
             }
             .msger-send-btn {
             margin-left: 10px;
-            background: rgb(0, 196, 65);
+            background: #579ffb;
             color: #fff;
             font-weight: bold;
             cursor: pointer;
@@ -204,7 +264,7 @@
             <form class="msger-inputarea">
                 <input type="text" class="msger-input" placeholder="Enter search query">
                 <!-- Remove record button -->
-                <button type="submit" class="msger-send-btn">Send</button>
+                <button type="submit" class="msger-send-btn">Query</button>
             </form>
 
  
@@ -236,6 +296,17 @@
 
         </section>
  
+        <!-- Custom Confirmation Modal -->
+        <div class="modal-overlay" id="confirmModal">
+            <div class="modal-container">
+                <div class="modal-title">Are you sure you want to clear the history?</div>
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-cancel" id="cancelClearBtn">Cancel</button>
+                    <button class="modal-btn modal-btn-confirm" id="confirmClearBtn">Clear</button>
+                </div>
+            </div>
+        </div>
+
         <script>
             let messages = [
             ];
@@ -347,23 +418,43 @@
                     
                 // Setup clear history button
                 document.getElementById('clearHistoryBtn').addEventListener('click', function() {
-                    // Ask for confirmation before clearing
-                    if (confirm('Are you sure you want to clear the chat history? This action cannot be undone.')) {
-                        // Clear messages in localStorage for current route
-                        localStorage.removeItem(storageKey);
-                        
-                        // Reset messages array, but keep system message if it exists
-                        if (HAS_SYSTEM_PROMPT) {
-                            messages = [{
-                                'role': 'system',
-                                'content': SYSTEM_PROMPT
-                            }];
-                        } else {
-                            messages = [];
-                        }
-                        
-                        // Clear chat UI
-                        msgerChat.innerHTML = '';
+                    // Show custom confirmation modal instead of using browser confirm
+                    const modal = document.getElementById('confirmModal');
+                    modal.style.display = 'flex';
+                });
+                
+                // Setup cancel button
+                document.getElementById('cancelClearBtn').addEventListener('click', function() {
+                    // Hide the modal
+                    document.getElementById('confirmModal').style.display = 'none';
+                });
+                
+                // Setup confirm button
+                document.getElementById('confirmClearBtn').addEventListener('click', function() {
+                    // Clear messages in localStorage for current route
+                    localStorage.removeItem(storageKey);
+                    
+                    // Reset messages array, but keep system message if it exists
+                    if (HAS_SYSTEM_PROMPT) {
+                        messages = [{
+                            'role': 'system',
+                            'content': SYSTEM_PROMPT
+                        }];
+                    } else {
+                        messages = [];
+                    }
+                    
+                    // Clear chat UI
+                    msgerChat.innerHTML = '';
+                    
+                    // Hide the modal
+                    document.getElementById('confirmModal').style.display = 'none';
+                });
+                
+                // Close modal when clicking outside
+                document.getElementById('confirmModal').addEventListener('click', function(event) {
+                    if (event.target === this) {
+                        this.style.display = 'none';
                     }
                 });
             });
