@@ -2,6 +2,7 @@
 <html>
     <head>
         <title>{{ settings.page_title|default('AI Chat') }}</title>
+        <meta name="robots" content="noindex, nofollow">
         <!-- Add data attributes for Jinja variables -->
         <meta name="has-system-prompt" content="{{ 'true' if settings.system_prompt else 'false' }}">
         <meta name="system-prompt" content="{{ settings.system_prompt|default('You are a helpful AI assistant.') }}">
